@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# 颜色控制
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
 # 检查 Docker 环境
 if ! command -v docker &> /dev/null; then
     echo "未检测到 Docker 环境，正在安装..."
@@ -19,9 +23,9 @@ MTG_CMD_VAR=${MTG_CMD_VAR:-$DEFAULT_MTG_SECRET}
 while true; do
     read -p "请输入 Cloudflare API Token: " CF_TOKEN
     if [[ -z "$CF_TOKEN" ]]; then
-        echo "Cloudflare API Token 不能为空，请重新输入。"
+        echo -e "${RED}Cloudflare API Token 不能为空，请重新输入。${NC}"
     elif [[ ${#CF_TOKEN} -lt 40 ]]; then
-        echo "Cloudflare API Token 格式错误，请检查并重新输入。"
+        echo -e "${RED}Cloudflare API Token 格式错误，请检查并重新输入。${NC}"
     else
         break
     fi
@@ -30,7 +34,7 @@ done
 while true; do
     read -p "请输入域名 (多个请用逗号分隔, 例如: example.com,sub.example.com): " DOMAINS_INPUT
     if [[ -z "$DOMAINS_INPUT" ]]; then
-        echo "域名不能为空，请重新输入。"
+        echo -e "${RED}域名不能为空，请重新输入。${NC}"
         continue
     fi
 
@@ -40,7 +44,7 @@ while true; do
     for domain in "${CHECK_DOMAINS[@]}"; do
         domain=$(echo "$domain" | xargs)
         if [[ ! $domain =~ ^([a-zA-Z0-9](([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)\.)+[a-zA-Z]{2,}$ ]]; then
-            echo "域名格式不正确: $domain (示例: example.com)"
+            echo -e "${RED}域名格式不正确: $domain (示例: example.com)${NC}"
             ALL_VALID=false
             break
         fi
@@ -381,13 +385,13 @@ while [ $COUNTER -lt $MAX_RETRIES ]; do
 done
 
 if [ $COUNTER -eq $MAX_RETRIES ]; then
-    echo -e "\n警告：证书申请超时。如果后续启动失败，可能是由于证书尚未下发。"
+    echo -e "\n${RED}警告：证书申请超时。如果后续启动失败，可能是由于证书尚未下发。${NC}"
 fi
 
 # 3. 启动其余服务
 echo "正在启动 Singbox 和 V2Ray..."
 if ! docker compose up -d; then
-    echo "错误: 启动失败，执行自动回滚..."
+    echo -e "${RED}错误: 启动失败，执行自动回滚...${NC}"
     docker compose down 2>/dev/null || true
     rm -rf caddy/ caddy.prod Caddyfile singbox.json v2ray.json docker-compose.yml
     exit 1
