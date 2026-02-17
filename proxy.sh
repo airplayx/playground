@@ -16,8 +16,40 @@ DEFAULT_MTG_SECRET="ee4b18cadc815fceeda957cdddeeaa566e62696e672e636f6d"
 read -p "请输入 MTG 密钥 (默认值: $DEFAULT_MTG_SECRET, 直接回车可使用): " MTG_CMD_VAR
 MTG_CMD_VAR=${MTG_CMD_VAR:-$DEFAULT_MTG_SECRET}
 
-read -p "请输入 Cloudflare API Token: " CF_TOKEN
-read -p "请输入域名 (多个请用逗号分隔, 例如: example.com,sub.example.com): " DOMAINS_INPUT
+while true; do
+    read -p "请输入 Cloudflare API Token: " CF_TOKEN
+    if [[ -z "$CF_TOKEN" ]]; then
+        echo "Cloudflare API Token 不能为空，请重新输入。"
+    elif [[ ${#CF_TOKEN} -lt 40 ]]; then
+        echo "Cloudflare API Token 格式错误，请检查并重新输入。"
+    else
+        break
+    fi
+done
+
+while true; do
+    read -p "请输入域名 (多个请用逗号分隔, 例如: example.com,sub.example.com): " DOMAINS_INPUT
+    if [[ -z "$DOMAINS_INPUT" ]]; then
+        echo "域名不能为空，请重新输入。"
+        continue
+    fi
+
+    # 检查域名格式
+    IFS=',' read -ra CHECK_DOMAINS <<< "$DOMAINS_INPUT"
+    ALL_VALID=true
+    for domain in "${CHECK_DOMAINS[@]}"; do
+        domain=$(echo "$domain" | xargs)
+        if [[ ! $domain =~ ^([a-zA-Z0-9](([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)\.)+[a-zA-Z]{2,}$ ]]; then
+            echo "域名格式不正确: $domain (示例: example.com)"
+            ALL_VALID=false
+            break
+        fi
+    done
+
+    if [ "$ALL_VALID" = true ]; then
+        break
+    fi
+done
 
 read -p "请输入 V2Ray 端口 (默认 10625, 多个域名对应多组端口请用逗号分隔, 批量范围用-): " V2RAY_PORT_INPUT
 V2RAY_PORT_INPUT=${V2RAY_PORT_INPUT:-"10625"}
